@@ -52,13 +52,16 @@ func (x *XFFFix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func normalizedLeftmostIP(xffValue string) string {
 	parts := strings.SplitN(xffValue, ",", 2)
+
 	leftmost := strings.TrimSpace(parts[0])
+
 	if leftmost == "" {
 		return ""
 	}
 
 	// Strip port when header contains host:port or [ipv6]:port.
-	if host, _, err := net.SplitHostPort(leftmost); err == nil {
+	host, _, err := net.SplitHostPort(leftmost)
+	if err == nil {
 		return host
 	}
 

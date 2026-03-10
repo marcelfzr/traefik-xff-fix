@@ -89,30 +89,38 @@ func TestXFFFix_SpacesAroundCommas(t *testing.T) {
 
 func mustNewHandler(t *testing.T) http.Handler {
 	t.Helper()
+
 	cfg := traefik_xff_fix.CreateConfig()
-	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
+	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {})
+
 	handler, err := traefik_xff_fix.New(context.Background(), next, cfg, "xff-fix")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return handler
 }
 
 func mustNewRequest(t *testing.T, xffValue string) *http.Request {
 	t.Helper()
+
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://localhost", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if xffValue != "" {
 		req.Header.Set("X-Forwarded-For", xffValue)
 	}
+
 	return req
 }
 
 func assertXFF(t *testing.T, req *http.Request, expected string) {
 	t.Helper()
+
 	got := req.Header.Get("X-Forwarded-For")
+
 	if got != expected {
 		t.Errorf("X-Forwarded-For: got %q, want %q", got, expected)
 	}
@@ -120,7 +128,9 @@ func assertXFF(t *testing.T, req *http.Request, expected string) {
 
 func assertXFFDeleted(t *testing.T, req *http.Request) {
 	t.Helper()
+
 	values, ok := req.Header["X-Forwarded-For"]
+
 	if ok {
 		t.Errorf("X-Forwarded-For should be removed, got %q", values)
 	}
@@ -128,10 +138,12 @@ func assertXFFDeleted(t *testing.T, req *http.Request) {
 
 func assertRemoteAddrHost(t *testing.T, req *http.Request, expectedHost string) {
 	t.Helper()
+
 	host, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		t.Fatalf("RemoteAddr should be host:port, got %q: %v", req.RemoteAddr, err)
 	}
+
 	if host != expectedHost {
 		t.Errorf("RemoteAddr host: got %q, want %q", host, expectedHost)
 	}
