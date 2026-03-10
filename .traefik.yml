@@ -1,0 +1,7 @@
+displayName: XFF Fix
+type: middleware
+import: github.com/marcelfzr/traefik-xff-fix
+
+summary: Rewrites X-Forwarded-For to contain only the leftmost client IP without port
+
+testData: {}
