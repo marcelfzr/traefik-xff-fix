@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/marcelfzr/traefik-xff-fix"
+	traefik_xff_fix "github.com/marcelfzr/traefik-xff-fix"
 )
 
 func TestXFFFix_MultipleIPs(t *testing.T) {
@@ -66,7 +66,6 @@ func TestXFFFix_EmptyHeader(t *testing.T) {
 
 	handler.ServeHTTP(rec, req)
 
-	// Empty/missing header: no crash, passthrough (header remains empty)
 	assertXFF(t, req, "")
 }
 
@@ -82,29 +81,36 @@ func TestXFFFix_SpacesAroundCommas(t *testing.T) {
 
 func mustNewHandler(t *testing.T) http.Handler {
 	t.Helper()
+
 	cfg := traefik_xff_fix.CreateConfig()
-	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
+	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {})
+
 	handler, err := traefik_xff_fix.New(context.Background(), next, cfg, "xff-fix")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return handler
 }
 
 func mustNewRequest(t *testing.T, xffValue string) *http.Request {
 	t.Helper()
+
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://localhost", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if xffValue != "" {
 		req.Header.Set("X-Forwarded-For", xffValue)
 	}
+
 	return req
 }
 
 func assertXFF(t *testing.T, req *http.Request, expected string) {
 	t.Helper()
+
 	got := req.Header.Get("X-Forwarded-For")
 	if got != expected {
 		t.Errorf("X-Forwarded-For: got %q, want %q", got, expected)

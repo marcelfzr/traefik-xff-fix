@@ -27,7 +27,7 @@ type XFFFix struct {
 }
 
 // New created a new XFFFix plugin.
-func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
+func New(_ context.Context, next http.Handler, _ *Config, name string) (http.Handler, error) {
 	return &XFFFix{
 		next: next,
 		name: name,
