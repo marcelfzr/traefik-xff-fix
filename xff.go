@@ -5,6 +5,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -37,18 +38,30 @@ func New(_ context.Context, next http.Handler, _ *Config, name string) (http.Han
 func (x *XFFFix) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	value := req.Header.Get(xForwardedFor)
 	if value != "" {
-		// Split by comma and take the leftmost (original client) IP
-		parts := strings.SplitN(value, ",", 2)
-		leftmost := strings.TrimSpace(parts[0])
-
-		// Strip port if present
-		host, _, err := net.SplitHostPort(leftmost)
-		if err == nil {
-			leftmost = host
+		leftmost := normalizedLeftmostIP(value)
+		if leftmost != "" {
+			// Let Traefik generate X-Forwarded-For from this rewritten remote address
+			// so the backend receives only one client IP.
+			req.Header.Del(xForwardedFor)
+			req.RemoteAddr = net.JoinHostPort(leftmost, strconv.Itoa(0))
 		}
-
-		req.Header.Set(xForwardedFor, leftmost)
 	}
 
 	x.next.ServeHTTP(rw, req)
+}
+
+func normalizedLeftmostIP(xffValue string) string {
+	parts := strings.SplitN(xffValue, ",", 2)
+	leftmost := strings.TrimSpace(parts[0])
+	if leftmost == "" {
+		return ""
+	}
+
+	// Strip port when header contains host:port or [ipv6]:port.
+	if host, _, err := net.SplitHostPort(leftmost); err == nil {
+		return host
+	}
+
+	// Handle bracketed IPv6 literals without ports.
+	return strings.Trim(leftmost, "[]")
 }
